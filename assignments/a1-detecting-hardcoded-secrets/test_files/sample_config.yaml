@@ -1,0 +1,35 @@
+# This is a sample file that mimics production code.
+
+version: "1.0"
+
+database:
+  host: "localhost"
+  port: 5432
+  user: "app_user"
+  password: "secure_password"
+  name: "app_database"
+
+api:
+  base_url: "https://api.example.com/v1"
+  timeout: 30
+  retries: 3
+
+auth:
+  token: "eyJraWQiOiIxY2UxZTEzNjE3ZGNmNzY2YjNjZWJjY2Y4ZGM1YmFmYThhNjVlNjg0MDIzZjdjMzJiZTgzNDliMjM4MDEzNWI0IiwidHlwIjoiUEFUIiwiYWxnIjoiRVMyNTYifQ.eyJpc3MiOiJodHRwczovL2F1dGguY2FsZW5kbHkuY29tIiwiaWF0IjoxNzI3NzI0MDkwLCJqdGkiOiIzZDM3M2JlZS00MDMxLTQwYjY2LTlmOTYtZjQ4YWYwY2Q3MjUzIiwidXNlcl91dWlkIjoiYTg5N2QxYzAtNGYwOS00OTUwLTlkMjUtZTRkNWEwYmY3Yjg2In0.2LMRlAxBq2r7kz5lyoA3G0xBGCp97X_CTW7wRYoHIvmYutHvPeWAMRpwp3VpSAns7MdRGwZbQj6szDAT6r7RWw"
+  expiry: "2024-09-30T12:00:00Z"  # Token expiry date in ISO 8601 format
+
+logging:
+  level: "info"
+  log_file: "/var/log/app.log"
+
+features:
+  enable_feature_x: true
+  enable_feature_y: false
+
+notification:
+  email:
+    enabled: true
+    smtp_server: "smtp.example.com"
+    port: 587
+    username: "notify@example.com"
+    password: "email_secure_password"
