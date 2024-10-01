@@ -1,6 +1,8 @@
 import os
 import re
 import sys
+import time
+import requests
 from colorama import Fore, init
 
 # Init Colorama
@@ -50,7 +52,38 @@ def is_valid_token(token):
     
     return True
 
+def validate_calendly_token(api_token):
+    url = "https://api.calendly.com/users/me"
+    headers = {
+        "Authorization": f"Bearer {api_token}",
+        "Content-Type": "application/json"
+    }
+    
+    response = requests.get(url, headers=headers)
+    
+    if response.status_code == 200:
+        return True, response.json()
+    elif response.status_code == 401:
+        return False, "Token is invalid or expired."
+    elif response.status_code == 403:
+        return False, "Token is valid but does not have permission."
+    elif response.status_code == 429:
+        return False, "Rate limit exceeded. Please try again later."
+    else:
+        return False, f"Unexpected error: {response.status_code} - {response.text}"
+
 def detect_tokens(directory):
+    # ASCII art lol
+    print("""
+___________     __               ___________                     __                 
+\\__    ___/___ |  | __ ____   ___\\__    ___/___________    ____ |  | __ ___________ 
+  |    | /  _ \\|  |/ // __ \\ /    \\|    |  \\_  __ \\__  \\ _/ ___\\|  |/ // __ \\_  __ \\
+  |    |(  <_> )    <\\  ___/|   |  \\    |   |  | \\/ __ \\\\  \\___|    <\\  ___/|  | \\/
+  |____| \\____/|__|_ \\\\___  >___|  /____|   |__|  (____  /\\___  >__|_ \\\\___  >__|   
+                    \\/    \\/     \\/                    \\/     \\/     \\/    \\/        
+""")
+    print("v0.3, made with ❤️ by Hritesh Sonawane")
+    print("-" * 50)
     print(Fore.CYAN + "🚀 Scanning directory:", directory)
     print("=" * 50)
 
@@ -74,25 +107,50 @@ def detect_tokens(directory):
                             found_token = token_match.group()
                             
                             if is_valid_token(found_token):
-                                # Get the surrounding lines
-                                context_lines = []
-                                if line_number > 0:  # Include line -1 if it exists
-                                    context_lines.append(f"{line_number}: {lines[line_number - 1].rstrip()}")
-                                context_lines.append(f"{line_number + 1}: {line.rstrip()}")  # Current line
-                                if line_number < len(lines) - 1:  # Include line +1 if it exists
-                                    context_lines.append(f"{line_number + 2}: {lines[line_number + 1].rstrip()}")
+                                # Validate the found token with Calendly API
+                                response_valid, user_info_or_message = validate_calendly_token(found_token)
+                                
+                                if response_valid:
+                                    # Get the surrounding lines
+                                    context_lines = []
+                                    if line_number > 0:  # Include line -1 if it exists
+                                        context_lines.append(f"{line_number}: {lines[line_number - 1].rstrip()}")
+                                    context_lines.append(f"{line_number + 1}: {line.rstrip()}")  # Current line
+                                    if line_number < len(lines) - 1:  # Include line +1 if it exists
+                                        context_lines.append(f"{line_number + 2}: {lines[line_number + 1].rstrip()}")
 
-                                # Print the results
-                                print(Fore.GREEN + "🎉 Token found!")
-                                print(Fore.BLUE + f"📂 File: {filepath}")
-                                print(Fore.BLUE + f"🔍 Line: {line_number + 1}")
-                                print(Fore.MAGENTA + f"💡 Found Token: {found_token}")
-                                print(Fore.YELLOW + "📜 Context:")
-                                print("\n".join(context_lines))
-                                print("-" * 50)
-                            
+                                    # Print the results
+                                    print(Fore.GREEN + "🎉 Token found!")
+                                    print(Fore.BLUE + f"📂 File: {filepath}")
+                                    print(Fore.BLUE + f"🔍 Line: {line_number + 1}")
+                                    print(Fore.MAGENTA + f"💡 Found Token: {found_token}")
+                                    print(Fore.YELLOW + "📜 Context:")
+                                    print("\n".join(context_lines))
+                                    print("-" * 50)
+                                else:
+                                    print(Fore.RED + "🚫 Token found but invalid:")
+                                    print(Fore.BLUE + f"📂 File: {filepath}")
+                                    print(Fore.BLUE + f"🔍 Line: {line_number + 1}")
+                                    print(Fore.MAGENTA + f"💡 Found Token: {found_token}")
+                                    
+                                    # Get the surrounding lines
+                                    context_lines = []
+                                    if line_number > 0:  # Include line -1 if it exists
+                                        context_lines.append(f"{line_number}: {lines[line_number - 1].rstrip()}")
+                                    context_lines.append(f"{line_number + 1}: {line.rstrip()}")  # Current line
+                                    if line_number < len(lines) - 1:  # Include line +1 if it exists
+                                        context_lines.append(f"{line_number + 2}: {lines[line_number + 1].rstrip()}")
+
+                                    # Print the context
+                                    print(Fore.YELLOW + "📜 Context:")
+                                    print("\n".join(context_lines))
+                                    print(Fore.RED + user_info_or_message)
+                                    print("-" * 50)
                             else:
-                                print(Fore.YELLOW + f"💤 Skipping invalid token in file: {filepath} at line {line_number + 1}")
+                                continue
+                            
+                            # Rate limiting: Sleep after each API call to avoid hitting rate limits
+                            time.sleep(5)
             
             except FileNotFoundError:
                 print(Fore.RED + f"❌ Error: The file '{filepath}' was not found.")
